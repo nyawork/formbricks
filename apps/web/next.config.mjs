@@ -35,23 +35,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "avatars.slack-edge.com",
+        hostname: "nya.quest",
       },
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-      {
-        protocol: "http",
-        hostname: "localhost",
-      },
-      {
-        protocol: "https",
-        hostname: "app.formbricks.com",
-      },
-      {
-        protocol: "https",
-        hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
+        hostname: "s.nya.quest",
       },
       {
         protocol: "https",
