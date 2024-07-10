@@ -136,11 +136,21 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+        ],
+      },
     ];
   },
   env: {
     INSTANCE_ID: createId(),
     INTERNAL_SECRET: createId(),
+    NEXTAUTH_URL: process.env.WEBAPP_URL,
   },
 };
 
