@@ -7,6 +7,7 @@ import {
   SMTP_HOST,
   SMTP_PASSWORD,
   SMTP_PORT,
+  SMTP_REJECT_UNAUTHORIZED_TLS,
   SMTP_SECURE_ENABLED,
   SMTP_USER,
   WEBAPP_URL,
@@ -15,7 +16,7 @@ import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formb
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weeklySummary";
+import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./components/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./components/auth/password-reset-notify-email";
 import { VerificationEmail } from "./components/auth/verification-email";
@@ -71,6 +72,9 @@ export const sendEmail = async (emailData: SendEmailDataProps) => {
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
     },
     logger: DEBUG,
     debug: DEBUG,
