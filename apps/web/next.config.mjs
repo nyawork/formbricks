@@ -38,11 +38,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "nya.quest",
-      },
-      {
-        protocol: "https",
-        hostname: "s.nya.quest",
+        hostname: "form.nya.work",
       },
       {
         protocol: "https",
