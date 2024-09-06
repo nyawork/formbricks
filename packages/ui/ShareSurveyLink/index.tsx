@@ -1,6 +1,7 @@
-import { Copy, RefreshCcw } from "lucide-react";
+import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
 import { generateSingleUseIdAction } from "./actions";
@@ -22,8 +23,17 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
-      const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
-      queryParams.push(`suId=${singleUseId}`);
+      const singleUseIdResponse = await generateSingleUseIdAction({
+        surveyId: survey.id,
+        isEncrypted: survey.singleUse.isEncrypted,
+      });
+
+      if (singleUseIdResponse?.data) {
+        queryParams.push(`suId=${singleUseIdResponse.data}`);
+      } else {
+        const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+        toast.error(errorMessage);
+      }
     }
 
     if (language !== "default") {
@@ -53,6 +63,22 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} />
         <Button
+          title="Preview survey in a new tab"
+          aria-label="Preview survey in a new tab"
+          onClick={() => {
+            let previewUrl = surveyUrl;
+            if (previewUrl.includes("?")) {
+              previewUrl += "&preview=true";
+            } else {
+              previewUrl += "?preview=true";
+            }
+            window.open(previewUrl, "_blank");
+          }}
+          EndIcon={SquareArrowOutUpRight}>
+          Preview
+        </Button>
+        <Button
+          variant="secondary"
           title="Copy survey link to clipboard"
           aria-label="Copy survey link to clipboard"
           onClick={() => {
@@ -60,7 +86,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
             toast.success("URL copied to clipboard!");
           }}
           EndIcon={Copy}>
-          Copy Link
+          Copy
         </Button>
         {survey.singleUse?.enabled && (
           <Button

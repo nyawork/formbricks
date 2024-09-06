@@ -45,22 +45,20 @@ export const SingleResponseCardHeader = ({
   const canResponseBeDeleted = response.finished
     ? true
     : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
-  const TooltipRenderer = (props: TooltipRendererProps) => {
-    const { children, shouldRender, tooltipContent } = props;
-    if (shouldRender) {
-      return (
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger>{children}</TooltipTrigger>
-            <TooltipContent avoidCollisions align="start">
-              {tooltipContent}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
 
-    return <>{children}</>;
+  const TooltipRenderer = ({ children, shouldRender, tooltipContent }: TooltipRendererProps) => {
+    return shouldRender ? (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>{children}</TooltipTrigger>
+          <TooltipContent avoidCollisions align="start" side="bottom">
+            {tooltipContent}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : (
+      <>{children}</>
+    );
   };
 
   const renderTooltip = Boolean(
@@ -168,8 +166,8 @@ export const SingleResponseCardHeader = ({
         </div>
 
         <div className="flex items-center space-x-4 text-sm">
-          <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
-            {timeSince(response.updatedAt.toISOString())}
+          <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString())}>
+            {timeSince(response.createdAt.toISOString())}
           </time>
           {user && !isViewer && (
             <TooltipRenderer shouldRender={!canResponseBeDeleted} tooltipContent={deleteSubmissionToolTip}>

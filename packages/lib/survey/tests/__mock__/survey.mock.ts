@@ -192,7 +192,8 @@ const baseSurveyProperties = {
   surveyClosedMessage: {
     enabled: false,
   },
-  isVerifyEmailEnabled: true,
+  isVerifyEmailEnabled: false,
+  isSingleResponsePerEmailEnabled: false,
   attributeFilters: [],
   ...commonMockProperties,
 };
@@ -277,6 +278,7 @@ export const updateSurveyInput: TSurvey = {
   segment: null,
   languages: [],
   showLanguageSwitch: null,
+  variables: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

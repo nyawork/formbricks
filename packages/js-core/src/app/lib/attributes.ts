@@ -7,10 +7,7 @@ import { AppConfig } from "./config";
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
-export const updateAttribute = async (
-  key: string,
-  value: string | number
-): Promise<Result<void, NetworkError>> => {
+export const updateAttribute = async (key: string, value: string): Promise<Result<void, NetworkError>> => {
   const { apiHost, environmentId, userId } = appConfig.get();
 
   const api = new FormbricksAPI({
@@ -26,7 +23,6 @@ export const updateAttribute = async (
       logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
       return okVoid();
     }
-
     return err({
       code: "network_error",
       // @ts-expect-error
@@ -48,7 +44,8 @@ export const updateAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TAttributes
+  attributes: TAttributes,
+  appConfig: AppConfig
 ): Promise<Result<TAttributes, NetworkError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
@@ -100,7 +97,7 @@ export const updateAttributes = async (
   }
 };
 
-export const isExistingAttribute = (key: string, value: string): boolean => {
+export const isExistingAttribute = (key: string, value: string, appConfig: AppConfig): boolean => {
   if (appConfig.get().state.attributes[key] === value) {
     return true;
   }
@@ -118,12 +115,12 @@ export const setAttributeInApp = async (
 
   logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
-  if (isExistingAttribute(key, value.toString())) {
+  if (isExistingAttribute(key, value.toString(), appConfig)) {
     logger.debug("Attribute already set to this value. Skipping update.");
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value);
+  const result = await updateAttribute(key, value.toString());
 
   if (result.ok) {
     // udpdate attribute in config

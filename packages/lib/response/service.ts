@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -114,7 +114,7 @@ export const getResponsesByPersonId = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
             orderBy: {
-              updatedAt: "asc",
+              createdAt: "desc",
             },
           });
 
@@ -204,6 +204,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     meta,
     singleUseId,
     ttc: initialTtc,
+    createdAt,
+    updatedAt,
   } = responseInput;
 
   try {
@@ -249,6 +251,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
       ttc: ttc,
+      createdAt,
+      updatedAt,
     };
 
     const responsePrisma = await prisma.response.create({
@@ -403,11 +407,13 @@ export const getResponses = reactCache(
         );
 
         limit = limit ?? RESPONSES_PER_PAGE;
+        const survey = await getSurvey(surveyId);
+        if (!survey) return [];
         try {
           const responses = await prisma.response.findMany({
             where: {
               surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
             select: responseSelection,
             orderBy: [
@@ -546,6 +552,9 @@ export const getResponseDownloadUrl = async (
       ...userAttributes,
     ];
 
+    if (survey.isVerifyEmailEnabled) {
+      headers.push("Verified Email");
+    }
     const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
 
     const fileName = getResponsesFileName(survey?.name || "", format);
@@ -737,10 +746,13 @@ export const getResponseCountBySurveyId = reactCache(
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
         try {
+          const survey = await getSurvey(surveyId);
+          if (!survey) return 0;
+
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
           });
           return responseCount;
@@ -753,6 +765,40 @@ export const getResponseCountBySurveyId = reactCache(
         }
       },
       [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId)],
+      }
+    )()
+);
+
+export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
+  (surveyId: string, email: string): Promise<boolean> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId], [email, ZString]);
+
+        try {
+          const response = await prisma.response.findFirst({
+            where: {
+              surveyId,
+              data: {
+                path: ["verifiedEmail"],
+                equals: email,
+              },
+            },
+            select: { id: true },
+          });
+
+          return !!response;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }

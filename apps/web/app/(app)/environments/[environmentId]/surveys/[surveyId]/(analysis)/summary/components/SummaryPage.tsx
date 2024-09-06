@@ -15,6 +15,7 @@ import {
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -79,22 +80,40 @@ export const SummaryPage = ({
   latestFiltersRef.current = filters;
 
   const getResponseCount = () => {
-    if (isSharingPage) return getResponseCountBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
-    return getResponseCountAction(surveyId, latestFiltersRef.current);
+    if (isSharingPage)
+      return getResponseCountBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+    return getResponseCountAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
   };
 
   const getSummary = () => {
-    if (isSharingPage) return getSummaryBySurveySharingKeyAction(sharingKey, latestFiltersRef.current);
-    return getSurveySummaryAction(surveyId, latestFiltersRef.current);
+    if (isSharingPage)
+      return getSummaryBySurveySharingKeyAction({
+        sharingKey,
+        filterCriteria: latestFiltersRef.current,
+      });
+
+    return getSurveySummaryAction({
+      surveyId,
+      filterCriteria: latestFiltersRef.current,
+    });
   };
 
   const handleInitialData = async () => {
     try {
-      const updatedResponseCount = await getResponseCount();
+      const updatedResponseCountData = await getResponseCount();
       const updatedSurveySummary = await getSummary();
 
-      setResponseCount(updatedResponseCount);
-      setSurveySummary(updatedSurveySummary);
+      const responseCount = updatedResponseCountData?.data ?? 0;
+      const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+
+      setResponseCount(responseCount);
+      setSurveySummary(surveySummary);
     } catch (error) {
       console.error(error);
     }
@@ -102,17 +121,16 @@ export const SummaryPage = ({
 
   useEffect(() => {
     handleInitialData();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
+  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
 
-  useEffect(() => {
-    if (!isShareEmbedModalOpen) {
-      const interval = setInterval(() => {
-        handleInitialData();
-      }, 10000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isShareEmbedModalOpen]);
+  useIntervalWhenFocused(
+    () => {
+      handleInitialData();
+    },
+    10000,
+    !isShareEmbedModalOpen,
+    false
+  );
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default", attributeClasses);

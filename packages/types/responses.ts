@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZAttributes } from "./attributes";
-import { ZId } from "./environment";
+import { ZId } from "./common";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys/types";
 import { ZTag } from "./tags";
 
@@ -304,3 +304,16 @@ export const ZResponseUpdate = z.object({
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
+
+export const ZResponseTableData = z.object({
+  responseId: z.string(),
+  createdAt: z.date(),
+  status: z.string(),
+  verifiedEmail: z.string(),
+  tags: z.array(ZTag),
+  notes: z.array(ZResponseNote),
+  language: z.string().nullable(),
+  responseData: ZResponseData,
+});
+
+export type TResponseTableData = z.infer<typeof ZResponseTableData>;
