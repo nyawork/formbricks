@@ -4,18 +4,20 @@ import { BoltIcon, CreditCardIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 export const OrganizationSettingsNavbar = ({
   environmentId,
   isFormbricksCloud,
   membershipRole,
   activeId,
+  loading,
 }: {
-  environmentId: string;
+  environmentId?: string;
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
   activeId: string;
+  loading?: boolean;
 }) => {
   const pathname = usePathname();
   const { isAdmin, isOwner } = getAccessFlags(membershipRole);
@@ -35,7 +37,7 @@ export const OrganizationSettingsNavbar = ({
       label: "Billing & Plan",
       href: `/environments/${environmentId}/settings/billing`,
       icon: <CreditCardIcon className="h-5 w-5" />,
-      hidden: !isFormbricksCloud || !isOwner,
+      hidden: !isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/billing"),
     },
     {
@@ -48,5 +50,5 @@ export const OrganizationSettingsNavbar = ({
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };

@@ -1,6 +1,6 @@
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { SurveyLoading } from "@formbricks/ui/SurveysList/components/SurveyLoading";
+import { SurveyLoading } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyLoading";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
   return (

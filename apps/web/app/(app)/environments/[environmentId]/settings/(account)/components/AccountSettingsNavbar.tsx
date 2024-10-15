@@ -2,14 +2,16 @@
 
 import { BellRingIcon, UserCircleIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 export const AccountSettingsNavbar = ({
   environmentId,
   activeId,
+  loading,
 }: {
-  environmentId: string;
   activeId: string;
+  environmentId?: string;
+  loading?: boolean;
 }) => {
   const pathname = usePathname();
   const navigation = [
@@ -29,5 +31,5 @@ export const AccountSettingsNavbar = ({
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };

@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
 import { createRequire } from "node:module";
@@ -46,18 +45,6 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/v1/client/:environmentId/in-app/sync",
-        destination: "/api/v1/client/:environmentId/website/sync",
-      },
-      {
-        source: "/api/v1/client/:environmentId/in-app/sync/:userId",
-        destination: "/api/v1/client/:environmentId/app/sync/:userId",
-      },
-    ];
-  },
   async redirects() {
     return [
       {
@@ -86,6 +73,22 @@ const nextConfig = {
         permanent: true,
       },
     ];
+  },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(mp4|webm|ogg|swf|ogv)$/,
+      use: [
+        {
+          loader: "file-loader",
+          options: {
+            publicPath: "/_next/static/videos/",
+            outputPath: "static/videos/",
+            name: "[name].[hash].[ext]",
+          },
+        },
+      ],
+    });
+    return config;
   },
   async headers() {
     return [
@@ -143,6 +146,74 @@ const nextConfig = {
             value: "nosniff",
           },
         ],
+      },
+      {
+        source: "/js/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+
+      // headers for /api/packages/(.*) -- the api route does not exist, but we still need the headers for the rewrites to work correctly!
+      {
+        source: "/api/packages/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/packages/website",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/app",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/js",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/surveys",
+        destination: "/js/surveys.umd.cjs",
+      },
+      {
+        source: "/api/v1/client/:environmentId/website/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/people/:userId",
       },
     ];
   },
