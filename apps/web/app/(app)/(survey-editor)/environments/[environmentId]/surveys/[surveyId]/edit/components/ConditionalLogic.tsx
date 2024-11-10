@@ -3,6 +3,7 @@ import {
   getDefaultOperatorForQuestion,
   replaceEndingCardHeadlineRecall,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
@@ -13,6 +14,7 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -42,6 +44,7 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
+  const t = useTranslations();
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", attributeClasses);
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", attributeClasses);
@@ -111,16 +114,17 @@ export function ConditionalLogic({
       logic: logicCopy,
     });
   };
+  const [parent] = useAutoAnimate();
 
   return (
-    <div className="mt-2">
+    <div className="mt-4" ref={parent}>
       <Label className="flex gap-2">
-        Conditional Logic
+        {t("environments.surveys.edit.conditional_logic")}
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
       {question.logic && question.logic.length > 0 && (
-        <div className="mt-2 flex flex-col gap-4">
+        <div className="mt-2 flex flex-col gap-4" ref={parent}>
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
@@ -141,38 +145,34 @@ export function ConditionalLogic({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     onClick={() => {
                       duplicateLogic(logicItemIdx);
-                    }}>
-                    <CopyIcon className="h-4 w-4" />
-                    Duplicate
+                    }}
+                    icon={<CopyIcon className="h-4 w-4" />}>
+                    {t("common.duplicate")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     disabled={logicItemIdx === 0}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx - 1);
-                    }}>
-                    <ArrowUpIcon className="h-4 w-4" />
-                    Move up
+                    }}
+                    icon={<ArrowUpIcon className="h-4 w-4" />}>
+                    {t("common.move_up")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     disabled={logicItemIdx === (question.logic ?? []).length - 1}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx + 1);
-                    }}>
-                    <ArrowDownIcon className="h-4 w-4" />
-                    Move down
+                    }}
+                    icon={<ArrowDownIcon className="h-4 w-4" />}>
+                    {t("common.move_down")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     onClick={() => {
                       handleRemoveLogic(logicItemIdx);
-                    }}>
-                    <TrashIcon className="h-4 w-4" />
-                    Remove
+                    }}
+                    icon={<TrashIcon className="h-4 w-4" />}>
+                    {t("common.remove")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -191,7 +191,7 @@ export function ConditionalLogic({
           variant="secondary"
           EndIcon={PlusIcon}
           onClick={addLogic}>
-          Add logic
+          {t("environments.surveys.edit.add_logic")}
         </Button>
       </div>
     </div>

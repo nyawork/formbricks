@@ -2,13 +2,14 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
-  CX_QUESTIONS_NAME_MAP,
   QUESTIONS_ICON_MAP,
-  QUESTIONS_NAME_MAP,
+  getCXQuestionNameMap,
   getQuestionDefaults,
+  getQuestionNameMap,
 } from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -42,6 +43,7 @@ interface EditorCardMenuProps {
   cardType: "question" | "ending";
   product?: TProduct;
   isCxMode?: boolean;
+  locale: string;
 }
 
 export const EditorCardMenu = ({
@@ -57,7 +59,9 @@ export const EditorCardMenu = ({
   addCard,
   cardType,
   isCxMode = false,
+  locale,
 }: EditorCardMenuProps) => {
+  const t = useTranslations();
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {
@@ -71,7 +75,7 @@ export const EditorCardMenu = ({
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
 
-  const availableQuestionTypes = isCxMode ? CX_QUESTIONS_NAME_MAP : QUESTIONS_NAME_MAP;
+  const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(locale) : getQuestionNameMap(locale);
 
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
     if (!type) return;
@@ -79,7 +83,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as TSurveyQuestion;
 
-    const questionDefaults = getQuestionDefaults(type, product);
+    const questionDefaults = getQuestionDefaults(type, product, locale);
 
     if (
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
@@ -111,7 +115,7 @@ export const EditorCardMenu = ({
   };
 
   const addQuestionCardBelow = (type: TSurveyQuestionTypeEnum) => {
-    const questionDefaults = getQuestionDefaults(type, product);
+    const questionDefaults = getQuestionDefaults(type, product, locale);
 
     addCard(
       {
@@ -162,23 +166,22 @@ export const EditorCardMenu = ({
           <EllipsisIcon className="h-4 w-4 text-slate-500 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="border border-slate-200">
+        <DropdownMenuContent>
           <div className="flex flex-col">
             {cardType === "question" && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
                   className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
                   onClick={(e) => e.preventDefault()}>
-                  Change question type
+                  {t("environments.surveys.edit.change_question_type")}
                 </DropdownMenuSubTrigger>
 
-                <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
+                <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     if (type === card.type) return null;
                     return (
                       <DropdownMenuItem
                         key={type}
-                        className="min-h-8 cursor-pointer"
                         onClick={() => {
                           setChangeToType(type as TSurveyQuestionTypeEnum);
                           if ((card as TSurveyQuestion).logic) {
@@ -187,8 +190,8 @@ export const EditorCardMenu = ({
                           }
 
                           changeQuestionType(type as TSurveyQuestionTypeEnum);
-                        }}>
-                        {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
+                        }}
+                        icon={QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}>
                         <span className="ml-2">{name}</span>
                       </DropdownMenuItem>
                     );
@@ -198,29 +201,27 @@ export const EditorCardMenu = ({
             )}
             {cardType === "ending" && (
               <DropdownMenuItem
-                className="flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700"
+                className="min-h-8 justify-between"
                 onClick={(e) => {
                   e.preventDefault();
                   addEndingCardBelow();
                 }}>
-                <span className="text-sm">Add ending below</span>
+                <span className="text-sm">{t("environments.surveys.edit.add_ending_below")}</span>
               </DropdownMenuItem>
             )}
 
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger
-                  className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
-                  onClick={(e) => e.preventDefault()}>
-                  Add question below
+                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
+                  {t("environments.surveys.edit.add_question_below")}
                 </DropdownMenuSubTrigger>
 
-                <DropdownMenuSubContent className="ml-4 border border-slate-200">
+                <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}
-                        className="min-h-8 cursor-pointer"
+                        className="min-h-8"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (cardType === "question") {
@@ -236,33 +237,27 @@ export const EditorCardMenu = ({
               </DropdownMenuSub>
             )}
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
-                cardIdx === 0 ? "opacity-50" : ""
-              }`}
               onClick={(e) => {
                 if (cardIdx !== 0) {
                   e.stopPropagation();
                   moveCard(cardIdx, true);
                 }
               }}
+              icon={<ArrowUpIcon className="h-4 w-4" />}
               disabled={cardIdx === 0}>
-              <span className="text-sm">Move up</span>
-              <ArrowUpIcon className="h-4 w-4" />
+              <span>{t("common.move_up")}</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
-                lastCard ? "opacity-50" : ""
-              }`}
               onClick={(e) => {
                 if (!lastCard) {
                   e.stopPropagation();
                   moveCard(cardIdx, false);
                 }
               }}
+              icon={<ArrowDownIcon className="h-4 w-4" />}
               disabled={lastCard}>
-              <span className="text-sm text-slate-600 hover:text-slate-700">Move down</span>
-              <ArrowDownIcon className="h-4 w-4" />
+              <span>{t("common.move_down")}</span>
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>
@@ -271,9 +266,9 @@ export const EditorCardMenu = ({
       <ConfirmationModal
         open={logicWarningModal}
         setOpen={setLogicWarningModal}
-        title="Changing will cause logic errors"
-        text="Changing the question type will remove the logic conditions from this question"
-        buttonText="Change anyway"
+        title={t("environments.surveys.edit.logic_error_warning")}
+        text={t("environments.surveys.edit.logic_error_warning_text")}
+        buttonText={t("environments.surveys.edit.change_anyway")}
         onConfirm={onConfirm}
       />
     </div>

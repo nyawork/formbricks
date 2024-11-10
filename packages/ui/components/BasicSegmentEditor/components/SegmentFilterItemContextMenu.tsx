@@ -1,4 +1,5 @@
-import { EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
@@ -16,6 +17,7 @@ export const SegmentFilterItemContextMenu = ({
   onMoveFilter,
   viewOnly,
 }: SegmentFilterItemContextMenuProps) => {
+  const t = useTranslations();
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
@@ -24,8 +26,16 @@ export const SegmentFilterItemContextMenu = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "up")}>Move up</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "down")}>Move down</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onMoveFilter(filterId, "up")}
+            icon={<ArrowUpIcon className="h-4 w-4" />}>
+            {t("common.move_up")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onMoveFilter(filterId, "down")}
+            icon={<ArrowDownIcon className="h-4 w-4" />}>
+            {t("common.move_down")}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
