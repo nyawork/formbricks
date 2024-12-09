@@ -1,6 +1,7 @@
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { unstable_after as after } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
@@ -10,7 +11,8 @@ import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
@@ -30,6 +32,37 @@ const Page = async ({ searchParams }) => {
     }
 
     const isInviteExpired = new Date(invite.expiresAt) < new Date();
+
+    const createMembershipAction = async () => {
+      "use server";
+
+      if (!session || !user) return;
+
+      await createMembership(invite.organizationId, session.user.id, {
+        accepted: true,
+        role: invite.role,
+      });
+      await deleteInvite(inviteId);
+      await sendInviteAcceptedEmail(
+        invite.creator.name ?? "",
+        user?.name ?? "",
+        invite.creator.email,
+        user?.locale ?? DEFAULT_LOCALE
+      );
+      await updateUser(session.user.id, {
+        notificationSettings: {
+          ...user.notificationSettings,
+          alert: user.notificationSettings.alert ?? {},
+          weeklySummary: user.notificationSettings.weeklySummary ?? {},
+          unsubscribedOrganizationIds: Array.from(
+            new Set([
+              ...(user.notificationSettings?.unsubscribedOrganizationIds || []),
+              invite.organizationId,
+            ])
+          ),
+        },
+      });
+    };
 
     if (isInviteExpired) {
       return (
@@ -67,30 +100,8 @@ const Page = async ({ searchParams }) => {
         </ContentLayout>
       );
     } else {
-      await createMembership(invite.organizationId, session.user.id, {
-        accepted: true,
-        role: invite.role,
-      });
-      await deleteInvite(inviteId);
-
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        user?.name ?? "",
-        invite.creator.email,
-        user?.locale ?? DEFAULT_LOCALE
-      );
-      await updateUser(session.user.id, {
-        notificationSettings: {
-          ...user.notificationSettings,
-          alert: user.notificationSettings.alert ?? {},
-          weeklySummary: user.notificationSettings.weeklySummary ?? {},
-          unsubscribedOrganizationIds: Array.from(
-            new Set([
-              ...(user.notificationSettings?.unsubscribedOrganizationIds || []),
-              invite.organizationId,
-            ])
-          ),
-        },
+      after(async () => {
+        await createMembershipAction();
       });
 
       return (

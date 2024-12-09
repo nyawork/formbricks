@@ -12,8 +12,38 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
 
+export const getOrganizationOwnerCount = reactCache(
+  async (organizationId: string): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString]);
+
+        try {
+          const ownersCount = await prisma.membership.count({
+            where: {
+              organizationId,
+              role: "owner",
+            },
+          });
+
+          return ownersCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getOrganizationOwnerCount-${organizationId}`],
+      {
+        tags: [membershipCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
 export const getMembersByOrganizationId = reactCache(
-  (organizationId: string, page?: number): Promise<TMember[]> =>
+  async (organizationId: string, page?: number): Promise<TMember[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
@@ -135,7 +165,7 @@ export const deleteMembership = async (
 };
 
 export const getMembershipsByUserId = reactCache(
-  (userId: string, page?: number): Promise<TMembership[]> =>
+  async (userId: string, page?: number): Promise<TMembership[]> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [page, ZOptionalNumber]);
